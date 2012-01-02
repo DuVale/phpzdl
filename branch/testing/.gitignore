@@ -1,0 +1,10 @@
+depcomp
+# python objects
+*.pyo
+*.pyc
+*.Po
+# Ignore Makefiles and Makefiles.in :)
+Makefile
+Makefile.in
+# Object files
+*.o

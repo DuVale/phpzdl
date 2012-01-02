@@ -1,0 +1,883 @@
+<?php
+/*****************************************************************************
+*
+*    License:
+*
+*   Copyright (c) 2003-2006 ossim.net
+*   Copyright (c) 2007-2009 AlienVault
+*   All rights reserved.
+*
+*   This package is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; version 2 dated June, 1991.
+*   You may not use, modify or distribute this program under any other version
+*   of the GNU General Public License.
+*
+*   This package is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with this package; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+*   MA  02110-1301  USA
+*
+*
+* On Debian GNU/Linux systems, the complete text of the GNU General
+* Public License can be found in `/usr/share/common-licenses/GPL-2'.
+*
+* Otherwise you can read it here: http://www.gnu.org/licenses/gpl-2.0.txt
+****************************************************************************/
+/**
+* Class and Function List:
+* Function list:
+* - Sensor()
+* - get_name()
+* - get_ip()
+* - get_priority()
+* - get_port()
+* - get_version()
+* - get_connect()
+* - get_descr()
+* - get_foundrows()
+* - get_list()
+* - get_all()
+* - get_count()
+* - check_plugin_rel()
+* - insert()
+* - update()
+* - delete()
+* - get_sensor_link()
+* - get_sensor_interface()
+* - sensor_exists()
+* Classes list:
+* - Sensor
+*/
+require_once 'classes/Net_sensor_reference.inc';
+require_once 'classes/Host_sensor_reference.inc';
+require_once 'classes/Session.inc';
+require_once 'classes/Net.inc';
+require_once 'classes/Log_action.inc';
+require_once 'ossim_db.inc';
+require_once 'classes/WebIndicator.inc';
+require_once 'classes/Util.inc';
+class Sensor {
+    var $name;
+    var $ip;
+    var $priority;
+    var $port;
+    var $tzone;
+    var $connect;
+    var $descr;
+    function Sensor($name, $ip, $priority, $port, $tzone, $version, $connect, $descr, $foundrows = 0) {
+        $this->name = $name;
+        $this->ip = $ip;
+        $this->priority = $priority;
+        $this->port = $port;
+        $this->tzone = $tzone;
+        $this->version = $version;
+        $this->connect = $connect;
+        $this->descr = $descr;
+        $this->foundrows = $foundrows;
+    }
+    function get_name() {
+        return $this->name;
+    }
+    function get_ip() {
+        return $this->ip;
+    }
+    function get_priority() {
+        return $this->priority;
+    }
+    function get_port() {
+        return $this->port;
+    }
+    function get_tzone() {
+        return $this->tzone;
+    }
+    function get_version() {
+        return $this->version;
+    }
+    function get_connect() {
+        return $this->connect;
+    }
+    function get_descr() {
+        return $this->descr;
+    }
+    function get_foundrows() {
+        return $this->foundrows;
+    }
+    function check_omp_connection($conn, $ip) {
+        require_once ('classes/OMP.inc');
+        
+        $uuid = Util::get_system_uuid();
+        
+        $omp = new OMP();
+        
+        // get server data
+        
+        $query = OssimQuery("SELECT port, user, PASSWORD as password, AES_DECRYPT(password,'".$uuid."') as dpassword FROM vuln_nessus_servers WHERE hostname='".$ip."'");
+        if (!$rs = & $conn->Execute($query)) {
+            die($conn->ErrorMsg());
+        } 
+        else {
+            if (!$rs->EOF) {
+                $port     = $rs->fields["port"];
+                $user     = $rs->fields["user"];
+                $password =($rs->fields['dpassword']!='') ? $rs->fields['dpassword'] : $rs->fields['password'];
+            }
+        }
+        
+        $omp->set_server_properties($ip, $port, $user, $password);
+        
+        $result = $omp->check_connection();
+        
+        return $result;
+    }
+    function get_list($conn, $args = "") {
+        $list = array();
+        $iffoundrows = preg_match("/LIMIT/i", $args) ? true : false;
+        $select = ($iffoundrows) ? "SQL_CALC_FOUND_ROWS *" : "*";
+        $query = OssimQuery("SELECT $select FROM sensor $args");
+		if (!$rs = & $conn->Execute($query)) {
+            print $conn->ErrorMsg();
+        } else {
+            $foundrows = 0;
+            if ($iffoundrows) {
+                if (!$rf = & $conn->Execute("SELECT FOUND_ROWS() as total")) print $conn->ErrorMsg();
+                else $foundrows = $rf->fields["total"];
+            }
+            while (!$rs->EOF) {
+				if (Session::sensorAllowed($rs->fields["ip"])) {
+					$vrsnqry = OssimQuery("SELECT version FROM sensor_properties WHERE ip='" . $rs->fields["ip"] . "'");
+                    $version = ($rv = & $conn->Execute($vrsnqry)) ? $version = $rv->fields["version"] : "unknown";
+                    $list[] = new Sensor($rs->fields["name"], $rs->fields["ip"], $rs->fields["priority"], $rs->fields["port"], $rs->fields["tzone"], $version, $rs->fields["connect"], $rs->fields["descr"], $foundrows);
+                }
+                $rs->MoveNext();
+            }
+        }
+        return $list;
+    }
+    function get_properties($conn, $sensor) {
+        $result = array();
+        $query = OssimQuery("SELECT * FROM sensor_properties WHERE ip='".$sensor."'");
+        if (!$rs = & $conn->Execute($query)) {
+            die($conn->ErrorMsg());
+        } 
+        else {
+            if (!$rs->EOF) {
+                $result = $rs->fields;
+            }
+        }
+        return $result;
+    }
+    function get_load($conn, $sensor) {
+        $result = "";
+        $query = OssimQuery("SELECT ( current_scans / max_scans ) FROM vuln_nessus_servers WHERE hostname='".$sensor."'");
+        if (!$rs = & $conn->Execute($query)) {
+            die($conn->ErrorMsg());
+        } 
+        else {
+            if ((!$rs->EOF) && ($rs->fields[0]!="")) {
+                $result = round($rs->fields[0]*100,1)."%";
+            } else {
+            	$result = "N/A";
+	    	}
+        }
+        return $result;
+    }    
+    function get_vuln_scanner_options($conn, $sensor) {
+        $result = array();
+		$uuid   = Util::get_system_uuid();
+        $query  = OssimQuery("SELECT port, user, PASSWORD, AES_DECRYPT(PASSWORD,'$uuid') AS pass_decrypt, max_scans FROM vuln_nessus_servers WHERE hostname='".$sensor."'");
+        
+		if (!$rs = & $conn->Execute($query)) {
+            print $conn->ErrorMsg();
+        } 
+        else 
+		{
+            if (!$rs->EOF) 
+			{
+                $result             = $rs->fields;
+				$result[2]          = ( empty($rs->fields['pass_decrypt']) ) ? $rs->fields['PASSWORD'] : $rs->fields['pass_decrypt'];
+				$result['PASSWORD'] = $result[2];
+			}
+        }
+			
+        return $result;
+    }
+    
+    function update_vuln_nessus_servers($conn, $sensor, $name, $user, $password, $port, $vuln_max_scans, $enabled) {
+    	if (Util::is_fake_pass($password))
+	        $query = "UPDATE vuln_nessus_servers SET name='$name', user='$user', port = '$port', max_scans= $vuln_max_scans, enabled = '$enabled', current_scans = 0 WHERE hostname='$sensor'";
+	    else
+		{
+	        $uuid     = Util::get_system_uuid();
+			$sql_pass = ( !empty($password) ) ? "AES_ENCRYPT('$password','$uuid')" : "'".$password."'";
+			$query    = "UPDATE vuln_nessus_servers SET name='$name', user='$user', PASSWORD = ".$sql_pass.", port = '$port', max_scans= $vuln_max_scans, enabled = '$enabled', current_scans = 0 WHERE hostname='$sensor'"; 
+		}
+		
+		if (!$rs = & $conn->Execute($query)) {
+            print $conn->ErrorMsg();
+        }
+        
+    }
+	
+    function insert_vuln_nessus_servers($conn, $sensor, $name, $enabled) {
+
+        $query = OssimQuery("SELECT id FROM vuln_nessus_servers WHERE hostname='".$sensor."'");
+
+        if (!$rs = & $conn->Execute($query)) {
+            print $conn->ErrorMsg();
+        } 
+        else {
+            if ($rs->fields["id"]=="") {
+	            $conf     = $GLOBALS["CONF"];
+				$port     = intval($conf->get_conf("nessus_port", FALSE));
+				$query    = OssimQuery("INSERT INTO vuln_nessus_servers (name , description, hostname ,
+                                        port, user, PASSWORD, server_nversion, server_feedtype, server_feedversion,
+                                        max_scans, current_scans, TYPE, site_code, owner, checkin_time, status , enabled)
+                                        VALUES (
+                                        '$name', 'RemoteHost', '$sensor', '$port', '', '', '2.2.10', 'GPL only', '200704181215', '5', '0', 'R', '', 'admin', NULL , 'A', '$enabled')");
+	            
+				if (!$rs = & $conn->Execute($query)) {
+	                print $conn->ErrorMsg();
+	            }
+            }
+        }
+    }
+    function set_properties($conn, $sensor, $has_nagios, $has_ntop, $has_vuln_scanner, $has_kismet) {
+        $sql = "insert into sensor_properties (ip,version,has_nagios,has_ntop,has_vuln_scanner,has_kismet)
+                values (?,?,?,?,?,?) on duplicate key update has_nagios = ?, has_ntop = ?, 
+                has_vuln_scanner = ?, has_kismet = ?";
+        $params = array(
+            $sensor,"",
+            $has_nagios,
+            $has_ntop,
+            $has_vuln_scanner,
+            $has_kismet,
+            $has_nagios,
+            $has_ntop,
+            $has_vuln_scanner,
+            $has_kismet
+        );
+        if (!$conn->Execute($sql, $params)) {
+            die($conn->ErrorMsg());
+        }
+    }
+    function delete_properties($conn, $ip) {
+        $sql = "delete from sensor_properties where ip=?";
+        if (!$conn->Execute($sql, array($ip))) {
+            die($conn->ErrorMsg());
+        }
+    }
+    // order by version by default
+    function get_list_by_version($conn,$order,$limit) {
+        $list = array();
+        $query = OssimQuery("SELECT SQL_CALC_FOUND_ROWS s.*,i.version FROM sensor s, sensor_properties i WHERE s.ip=i.ip ORDER BY i.$order $limit");
+        if (!$rs = & $conn->Execute($query)) {
+            print $conn->ErrorMsg();
+        } else {
+            $foundrows = 0;
+            if (!$rf = & $conn->Execute("SELECT FOUND_ROWS() as total")) print $conn->ErrorMsg();
+            else $foundrows = $rf->fields["total"];
+            while (!$rs->EOF) {
+                if (Session::hostAllowed($conn, $rs->fields["ip"])) {
+                    $list[] = new Sensor($rs->fields["name"], $rs->fields["ip"], $rs->fields["priority"], $rs->fields["port"], $rs->fields["version"], $rs->fields["connect"], $rs->fields["descr"], $foundrows);
+                }
+                $rs->MoveNext();
+            }
+        }
+        return $list;
+    }
+    // use in session/newuserform and when required independency of Host/Net
+    public static function get_all($conn, $order = "ORDER BY name ASC", $checkperms=true) {
+        // User sensor filtering
+		$sensor_where = "";
+		if ($checkperms && Session::allowedSensors() != "") {
+			$user_sensors = explode(",",Session::allowedSensors());
+			$sensor_str = "";
+			foreach ($user_sensors as $user_sensor) if ($user_sensor != "")
+				$sensor_str .= (($sensor_str != "") ? "," : "")."'".$user_sensor."'";
+			if ($sensor_str == "") $sensor_str = "0";
+			$sensor_where = " WHERE ip in (" . $sensor_str . ")";
+		}
+		$list = array();
+        $sql = "SELECT * FROM sensor$sensor_where $order";
+        if (!$rs = $conn->Execute($sql)) {
+            die($conn->ErrorMsg());
+        }
+        while (!$rs->EOF) {
+            $vrsnqry = OssimQuery("SELECT version FROM sensor_properties WHERE ip='" . $rs->fields["ip"] . "'");
+            $version = ($rv = & $conn->Execute($vrsnqry)) ? $version = $rv->fields["version"] : "unknown";
+            $list[] = new Sensor($rs->fields["name"], $rs->fields["ip"], $rs->fields["priority"], $rs->fields["port"], $rs->fields["tzone"], $version, $rs->fields["connect"], $rs->fields["descr"]);
+            $rs->MoveNext();
+        }
+        return $list;
+    }
+    // get available sensor ips
+    function get_all_ips($conn) {
+		$list = array();
+        $sql = "SELECT * FROM sensor";
+        if (!$rs = $conn->Execute($sql)) {
+            die($conn->ErrorMsg());
+        }
+        while (!$rs->EOF) {
+        	$list[$rs->fields["ip"]] = $rs->fields["name"];
+            $rs->MoveNext();
+        }
+        return $list;
+    }
+        
+    function get_all_with_ntop($conn, $order = "ORDER BY name ASC", $checkperms=true) {
+        // User sensor filtering 
+		$sensor_where = "";
+		if ($checkperms && Session::allowedSensors() != "") 
+		{
+			$user_sensors = explode(",",Session::allowedSensors());
+			$sensor_str = "";
+			foreach ($user_sensors as $user_sensor) if ($user_sensor != "")
+				$sensor_str .= (($sensor_str != "") ? "," : "")."'".$user_sensor."'";
+			if ($sensor_str == "") $sensor_str = "0";
+			$sensor_where = " WHERE ip in (" . $sensor_str . ")";
+		}
+		
+		$list = array();
+        $sql = "SELECT * FROM sensor$sensor_where $order";
+        if (!$rs = $conn->Execute($sql)) {
+            die($conn->ErrorMsg());
+        }
+		
+        while (!$rs->EOF) 
+		{
+            $vrsnqry = OssimQuery("SELECT has_ntop, version FROM sensor_properties WHERE ip='" . $rs->fields["ip"] . "'");
+            $version = ($rv = & $conn->Execute($vrsnqry)) ? $version = $rv->fields["version"] : "unknown";
+            if ( intval($rv->fields["has_ntop"]) == 1 )
+                $list[] = new Sensor($rs->fields["name"], $rs->fields["ip"], $rs->fields["priority"], $rs->fields["port"], $rs->fields["tzone"], $version, $rs->fields["connect"], $rs->fields["descr"]);
+            $rs->MoveNext();
+        }
+		
+        return $list;
+    }
+	
+    function get_count($conn) {
+        $num = 0;
+        $sql = "SELECT count(*) as count FROM sensor;";
+        if (!$rs = $conn->Execute($sql)) {
+            die($conn->ErrorMsg());
+        }
+        if (!$rs->EOF) {
+            $num = $rs->fields["count"];
+        }
+        return $num;
+    }
+    function check_plugin_rel($conn, $sensor, $plugin_id) {
+        $plugin_id = intval($plugin_id);
+        $has_plugin = false;
+        $sql = "SELECT count(*) as count
+                FROM net,net_group_scan,net_group_reference,net_sensor_reference,sensor
+                WHERE net.name = net_group_reference.net_name AND
+                      net_group_scan.plugin_id = ? AND
+                      net_sensor_reference.net_name = net_group_reference.net_name AND
+                      sensor.name = net_sensor_reference.sensor_name AND
+                      net_group_scan.net_group_name = net_group_reference.net_group_name AND
+                      sensor.ip = ?";
+        $params = array(
+            $plugin_id,
+            $sensor
+        );
+        if (!$rs = $conn->Execute($sql, $params)) {
+            die($conn->ErrorMsg());
+        }
+        if (!$rs->EOF) {
+            if ($rs->fields["count"] > 0) {
+                $has_plugin = true;
+            }
+        }
+        $sql = "SELECT count(*) as count
+                FROM net,net_scan,net_sensor_reference,sensor
+                WHERE net.name = net_scan.net_name AND
+                      net_scan.plugin_id = ? AND 
+                      net_sensor_reference.net_name = net_scan.net_name AND
+                      sensor.name = net_sensor_reference.sensor_name AND
+                      sensor.ip = ?";
+        $params = array(
+            $plugin_id,
+            $sensor
+        );
+        if (!$rs = $conn->Execute($sql, $params)) {
+            die($conn->ErrorMsg());
+        }
+        if (!$rs->EOF) {
+            if ($rs->fields["count"] > 0) {
+                $has_plugin = true;
+            }
+        }
+        $sql = "SELECT count(*) as count
+                FROM host_scan,host,sensor,host_sensor_reference
+                WHERE plugin_id = ? AND
+                      host_sensor_reference.sensor_name = sensor.name AND
+                      host_sensor_reference.host_ip = inet_ntoa(host_scan.host_ip) AND
+                      host.ip = inet_ntoa(host_scan.host_ip) AND
+                      sensor.ip = ?";
+        if (!$rs = $conn->Execute($sql, $params)) {
+            die($conn->ErrorMsg());
+        }
+        if (!$rs->EOF) {
+            if ($rs->fields["count"] > 0) {
+                $has_plugin = true;
+            }
+        }
+        return $has_plugin;
+    }
+    function insert($conn, $name, $ip, $priority, $port, $tzone, $descr) {
+        $sql = "INSERT INTO sensor (name, ip, priority, port, tzone, connect, descr)
+                VALUES (?, ?, ?, ?, ?, 0, ?)";
+        $params = array(
+            $name,
+            $ip,
+            $priority,
+            $port,
+            $tzone,
+            $descr
+        );
+        if (!$conn->Execute($sql, $params)) {
+            die($conn->ErrorMsg());
+        }
+        $sql = "INSERT INTO sensor_stats (name) VALUES (?)";
+        if (!$conn->Execute($sql, array(
+            $name
+        ))) {
+            die($conn->ErrorMsg());
+        }
+        $infolog = array(
+            $name,
+            "[" . $ip . "]"
+        );
+        Log_action::log(33, $infolog);
+        WebIndicator::set_on("Reload_sensors");
+        WebIndicator::set_on("ReloadPolicy");
+    }
+    function update($conn, $name, $ip, $priority, $port, $tzone, $descr) {
+        $sql = "UPDATE sensor SET name = ?, ip = ?, 
+                priority = ?, port = ?, tzone = ?, descr = ? 
+                WHERE name = ?";
+        $params = array(
+            $name,
+            $ip,
+            $priority,
+            $port,
+            $tzone,
+            $descr,
+            $name
+        );
+        if (!$conn->Execute($sql, $params)) {
+            die($conn->ErrorMsg());
+        }
+        $sql = "UPDATE sensor_stats SET name = ? WHERE name = ?";
+        if (!$conn->Execute($sql, array(
+            $name,
+            $name
+        ))) {
+            die($conn->ErrorMsg());
+        }
+        $infolog = array(
+            $name,
+            "[" . $ip . "]"
+        );
+        Log_action::log(34, $infolog);
+        WebIndicator::set_on("Reload_sensors");
+        WebIndicator::set_on("ReloadPolicy");
+    }
+    function delete($conn, $name) {
+        $sql = "SELECT ip FROM sensor WHERE name = ?";
+        if (!$rs = $conn->Execute($sql, array($name))) {
+            die($conn->ErrorMsg());
+        }
+		$ip = $rs->fields["ip"];
+        $sql = "DELETE FROM sensor WHERE name = ?";
+        if (!$conn->Execute($sql, array(
+            $name
+        ))) {
+            die($conn->ErrorMsg());
+        }
+        $sql = "DELETE FROM sensor_stats WHERE name = ?";
+        if (!$conn->Execute($sql, array(
+            $name
+        ))) {
+            die($conn->ErrorMsg());
+        }
+        $sql = "DELETE FROM vuln_nessus_servers WHERE hostname = ?";
+        if (!$conn->Execute($sql, array(
+            $ip
+        ))) {
+            die($conn->ErrorMsg());
+        }
+        Sensor::delete_properties($conn, $ip);
+        Net_sensor_reference::check_orphan($conn);
+        Host_sensor_reference::check_orphan($conn);
+        $infolog = array(
+            $name
+        );
+        Log_action::log(35, $infolog);
+        WebIndicator::set_on("Reload_sensors");
+        // clean cache sensors
+        require_once "classes/Util.inc";
+        Util::clean_json_cache_files("sensors");
+        //
+        WebIndicator::set_on("ReloadPolicy");
+    }
+    /*
+    * Given a host ip, return its sensor ip asociated.
+    *
+    * Look at:
+    *  1st) host table
+    *  2nd) net table
+    *  3rd) /etc/ossim.conf
+    */
+    function get_sensor_link($conn, $host_ip) {
+        require_once "classes/Net.inc";
+        require_once "ossim_conf.inc";
+        $conf = $GLOBALS["CONF"];
+        $sensor_ip = '';
+        /* read from host table */
+        $query = "SELECT sensor.ip FROM host_sensor_reference, sensor 
+                  WHERE host_sensor_reference.host_ip = ? AND 
+                        sensor.name = host_sensor_reference.sensor_name 
+                  ORDER BY sensor.priority DESC LIMIT 1";
+        if ( !$rs = & $conn->Execute($query, array($host_ip)) ) {
+            print $conn->ErrorMsg();
+        } 
+        elseif (!$rs->EOF) 
+        {
+            $ntop_links = Sensor::get_ntop_link($rs->fields["ip"]);
+            $sensor_ip  = $ntop_links["ntop"];
+            
+            $sensor_ip = preg_replace("/\/$/", "", $sensor_ip);
+            
+            return $sensor_ip;
+        }
+        
+        /* read from network table */
+       
+        if (count($cidrs = Net::get_cache_cidr($conn, $host_ip)) > 0) 
+        {
+            $netname = Net::get_name_by_ip($conn, $cidrs[0]);
+            $query = "SELECT ip
+                      FROM sensor, net_sensor_reference 
+                      WHERE name = sensor_name AND net_name = ?";
+            if (!$rs = & $conn->Execute($query, array(
+                $netname
+            ))) {
+                print $conn->ErrorMsg();
+            } elseif (!$rs->EOF) {
+
+                $ntop_links = Sensor::get_ntop_link($rs->fields["ip"]);
+                $sensor_ip = $ntop_links["ntop"];
+                
+                $sensor_ip = preg_replace("/\/$/", "", $sensor_ip);
+    
+                return $sensor_ip;
+            }
+        }
+        
+        /* read from /etc/ossim.conf */
+        
+        if ($sensor_ip == '') 
+        {
+	        /*
+            $components = parse_url($conf->get_conf("ntop_link"));
+	        if ($components["host"]=="")
+	        	$components["host"] = "127.0.0.1";
+	        elseif (!preg_match("/\d+\.\d+\.\d+\.\d+/",$components["host"]))
+	        	$components["host"] = Sensor::get_sensor_ip($conn,$components["host"]);
+            */
+	        
+            $ntop_links = Sensor::get_ntop_link("");
+	        return $ntop_links["ntop"];
+        }
+    }
+    
+    function get_net_sensor_link($conn, $cidr) {
+        require_once "classes/Net.inc";
+    
+        $conf = $GLOBALS["CONF"];
+    
+        $netname = Net::get_name_by_ip($conn, $cidr);
+        $query = "SELECT ip
+                  FROM sensor, net_sensor_reference 
+                  WHERE name = sensor_name AND net_name = ?";
+        if (!$rs = & $conn->Execute($query, array($netname))) {
+            print $conn->ErrorMsg();
+        } 
+        elseif (!$rs->EOF) 
+        {
+            $ntop_links = Sensor::get_ntop_link($rs->fields["ip"]);
+            return $ntop_links;
+        }
+        
+        return Sensor::get_ntop_link("");
+    }
+    
+    function get_ntop_link($sensor) {
+        $protocol = "http";
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == "on") 
+            $protocol = "https";
+        
+		$port = "";
+        if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != "80" && $_SERVER['SERVER_PORT'] != "443") 
+            $port = ":".$_SERVER['SERVER_PORT'];
+        
+        //$ntop     = "$protocol://".$_SESSION["_user"].":bypass@" . $_SERVER['SERVER_NAME'] . $port . "/ntop_" . $sensor. "/";
+        //$testntop = "$protocol://".$_SESSION["_user"].":bypass@127.0.0.1/ntop_" . $sensor. "/"; // "$protocol://".$sensor.":3000/";
+        
+        $url_sensor  = ( $sensor == '' ) ? "/ntop/" : "/ntop_" . $sensor. "/"; 
+        $ntop        = "$protocol://" . $_SERVER['SERVER_NAME'] . $port .  $url_sensor;
+        
+        $testntop    = "$protocol://127.0.0.1/".$url_sensor; // "$protocol://".$sensor.":3000/";
+    
+        return( array( "ntop" => $ntop, "testntop" => $testntop, "sensor_ntop" => $sensor ) );
+    }
+    
+    function ntop_wrapper($link) {
+        $default_opts = array(
+          'http'=>array(
+            'header'=> "Cookie: PHPSESSID=".$_COOKIE["PHPSESSID"]
+          )
+        );
+        
+        $resource = stream_context_get_default($default_opts);
+        $data     = @file($link, FILE_SKIP_EMPTY_LINES, $resource);
+                       
+        if (is_array($data)) 
+        {
+            foreach ($data as $line) 
+            {
+                if (preg_match("/Error\s+404/i",$line)) 
+                    return false;
+            }
+        }
+        else 
+        {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    function reorder_sensors($conn,$arr) {
+		$sensors = array();
+        $sql = "SELECT v.name,v.hostname FROM vuln_nessus_servers v,sensor s WHERE s.ip=v.hostname AND v.enabled=1 order by ( v.current_scans / v.max_scans ) ASC,s.priority DESC";
+        if (!$rs = $conn->Execute($sql)) {
+            die($conn->ErrorMsg());
+        }
+        while (!$rs->EOF) {
+            $ip = $rs->fields["hostname"];
+            if (in_array($ip,$arr)) {
+            	$sensors[] = $ip;
+            }
+            $rs->MoveNext();
+        }    	
+        foreach ($arr as $ip) if (!in_array($ip,$sensors)) $sensors[] = $ip;
+        return $sensors;
+    }
+    /*
+    * Given a host ip, return its main sensor's interface.
+    *
+    * Look at:
+    *  1st) host table
+    *  2nd) net table
+    *  3rd) /etc/ossim.conf
+    */
+    function get_sensor_interface($conn, $host_ip, $strict=false, $all_interfaces=false) {
+        require_once "classes/Net.inc";
+        require_once "ossim_conf.inc";
+        $conf = $GLOBALS["CONF"];
+        
+        if(!$all_interfaces)    $hm = "AND sensor_interfaces.main = 1 ORDER BY sensor.priority DESC LIMIT 1";
+        else                    $hm = "ORDER BY sensor.priority DESC";
+        
+        $sensor_interface_name = '';
+        /* read from host table */
+        $query = "SELECT sensor_interfaces.interface
+                  FROM host_sensor_reference, sensor, sensor_interfaces
+                  WHERE host_sensor_reference.host_ip = ? AND 
+                        sensor.name = host_sensor_reference.sensor_name $hm";
+        if (!$rs = & $conn->Execute($query, array(
+            $host_ip
+        ))) {
+            print $conn->ErrorMsg();
+        } elseif (!$rs->EOF) {
+            while (!$rs->EOF) {
+                if($sensor_interface_name=="")    $sensor_interface_name = $rs->fields["interface"];
+                else    $sensor_interface_name .= ",".$rs->fields["interface"];
+                $rs->MoveNext();
+            }
+            return $sensor_interface_name;
+        }
+
+        if(!$all_interfaces)    $hm = "AND sensor_interfaces.main = 1";
+        else                    $hm = "";
+        
+        /* read from network table */
+        if ($net_list = Net::get_list($conn)) {
+            foreach($net_list as $net) {
+                if (Net::is_ip_in_cache_cidr($conn, $host_ip, $net->get_ips())) {
+                    $query = "SELECT sensor_interfaces.interface
+                              FROM sensor, net_sensor_reference, sensor_interfaces
+                              WHERE sensor_interfaces.name = sensor.name AND
+                                    net_name = ? $hm";
+                    if (!$rs = & $conn->Execute($query, array(
+                        $net->get_name()
+                    ))) {
+                        print $conn->ErrorMsg();
+                    } elseif (!$rs->EOF) {
+                        while (!$rs->EOF) {
+                            if($sensor_interface_name=="")    $sensor_interface_name = $rs->fields["interface"];
+                            else    $sensor_interface_name .= ",".$rs->fields["interface"];
+                            $rs->MoveNext();
+                        }
+                        return $sensor_interface_name;
+                    }
+                }
+            }
+        }
+        /* read from /etc/ossim.conf */
+        if ($sensor_interface_name == '' && !$strict) {
+            $sensor_interface_name = $conf->get_conf("ossim_interface");
+        }
+        return $sensor_interface_name;
+    }
+    function get_interfaces($conn, $host_ip) {
+        $sensor_interface_name = "";
+        /* read from sensor_interfaces */
+        $query = "SELECT sensor_interfaces.interface
+                  FROM sensor_interfaces
+                  WHERE sensor = ?";
+        if (!$rs = & $conn->Execute($query, array(
+            $host_ip
+        ))) {
+            print $conn->ErrorMsg();
+        } elseif (!$rs->EOF) {
+            while (!$rs->EOF) {
+                if($sensor_interface_name=="")    $sensor_interface_name = $rs->fields["interface"];
+                else    $sensor_interface_name .= ",".$rs->fields["interface"];
+                $rs->MoveNext();
+            }
+        }
+        return $sensor_interface_name;
+    }
+	
+	public static function sensor_exists($conn,$sensor) {
+		$sensor_list = Sensor::get_all($conn, "ORDER BY name");
+		
+		foreach ($sensor_list as $s) {
+			if ($s->get_name() == $sensor || $s->get_ip() == $sensor) return true;
+		}
+		return false;
+	}
+    function get_sensor_ip($conn, $name = "") {
+        $query = OssimQuery("SELECT ip FROM sensor WHERE name=?");
+        if (!$rs = & $conn->Execute($query,array($name))) {
+            print $conn->ErrorMsg();
+        } elseif (!$rs->EOF) {
+            return $rs->fields["ip"];
+        }
+        return $name;
+    }
+    function get_sensor_name($conn, $ip = "") {
+        $query = OssimQuery("SELECT name FROM sensor WHERE ip=? ORDER BY priority DESC");
+                if (!$rs = & $conn->Execute($query,array($ip))) {
+            print $conn->ErrorMsg();
+        } elseif (!$rs->EOF) {
+            return $rs->fields["name"];
+        }
+        return $ip;
+    }
+	
+	function is_sensor_in_templates($conn, $ip)
+	{
+		$templates = array();
+		
+		if ( !empty($ip) )
+		{
+			$query = OssimQuery("SELECT id, name FROM acl_templates WHERE allowed_sensors LIKE '%$ip%'");
+			
+			if ( !$rs = $conn->Execute($query) ) 
+			{
+				die($conn->ErrorMsg());
+			}
+			while (!$rs->EOF) 
+			{
+				$templates[$rs->fields["id"]] = $rs->fields["name"];
+				$rs->MoveNext();
+			}
+		}
+		
+		return $templates;
+	}
+	
+	
+    function get_assets($conn, $name) {
+        $list = array();
+        $list["host"]= array();
+        $list["net"]= array();
+        $list["hgroup"]= array();
+        $list["ngroup"]= array();
+        
+        // add hosts
+        $sql = "SELECT hsr.host_ip, h.hostname FROM host h, host_sensor_reference hsr WHERE h.ip=hsr.host_ip AND hsr.sensor_name='$name'";
+        if (!$rs = $conn->Execute($sql)) {
+            die($conn->ErrorMsg());
+        }
+        while (!$rs->EOF) {
+            $list["host"][$rs->fields["hostname"]] = $rs->fields["host_ip"];
+            $rs->MoveNext();
+        }
+        
+        // add nets
+        $sql = "SELECT n.ips, n.name FROM net n, net_sensor_reference nsr WHERE n.name=nsr.net_name AND nsr.sensor_name='$name'";
+        if (!$rs = $conn->Execute($sql)) {
+            die($conn->ErrorMsg());
+        }
+        while (!$rs->EOF) {
+            $list["net"][$rs->fields["name"]] = $rs->fields["ips"];
+            $rs->MoveNext();
+        }
+        
+        // add host groups
+        $sql = "SELECT DISTINCT hgr.host_group_name FROM host_group_reference hgr, host_group_sensor_reference hgsr WHERE hgr.host_group_name=hgsr.group_name AND hgsr.sensor_name='$name'";
+
+        if (!$rs = $conn->Execute($sql)) {
+            die($conn->ErrorMsg());
+        }
+        while (!$rs->EOF) {
+            $list["hgroup"][$rs->fields["host_group_name"]] = 1;
+            $rs->MoveNext();
+        }
+        
+        // add net groups
+        $net_groups = array();
+        $sql = "SELECT net_group_name, net_name FROM net_group_reference ORDER BY net_group_name";
+        if (!$rs = $conn->Execute($sql)) {
+            die($conn->ErrorMsg());
+        }
+        while (!$rs->EOF) {
+            $net_groups[$rs->fields["net_group_name"]][]= $rs->fields["net_name"];
+            $rs->MoveNext();
+        }
+        
+        foreach($net_groups as $ng_name => $net_group) {
+            $allowed = 1;
+            foreach ($net_group as $n => $net_name){
+                if (!array_key_exists($net_name,$list["net"])) {
+                    $allowed = 0; break;
+                }
+            }
+            if ($allowed) $list["ngroup"][$ng_name] = 1;
+        }
+        return $list;
+    }
+}
+?>

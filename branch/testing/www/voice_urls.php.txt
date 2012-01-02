@@ -1,0 +1,133 @@
+<?php
+/*****************************************************************************
+*
+*    License:
+*
+*   Copyright (c) 2003-2006 ossim.net
+*   Copyright (c) 2007-2009 AlienVault
+*   All rights reserved.
+*
+*   This package is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; version 2 dated June, 1991.
+*   You may not use, modify or distribute this program under any other version
+*   of the GNU General Public License.
+*
+*   This package is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with this package; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+*   MA  02110-1301  USA
+*
+*
+* On Debian GNU/Linux systems, the complete text of the GNU General
+* Public License can be found in `/usr/share/common-licenses/GPL-2'.
+*
+* Otherwise you can read it here: http://www.gnu.org/licenses/gpl-2.0.txt
+****************************************************************************/
+/**
+* Class and Function List:
+* Function list:
+* Classes list:
+*/
+?>
+var panel_url = '/ossim/panel/panel.php';
+var alarm_url = '/ossim/control_panel/alarm_console.php?hide_closed=1&hmenu=Alarms&smenu=Alarms';
+var tickets_url = '/ossim/incidents/index.php?status=&hmenu=Tickets&smenu=Tickets';
+var maps_url = '/ossim/risk_maps/riskmaps.php?view=1&hmenu=Risk&smenu=Risk';
+var siem_url = '/ossim/forensics/base_qry_main.php?clear_allcriteria=1&num_result_rows=-1&submit=Query+DB&current_view=-1&hmenu=Forensics&smenu=Forensics';
+var logger_url = '/ossim/sem/index.php?hmenu=SEM&smenu=SEM';
+var vulns_url = '/ossim/vulnmeter/index.php?hmenu=Vulnerabilities&smenu=Vulnerabilities';
+var hids_url = '/ossim/ossec/status.php?hmenu=Detection&smenu=HIDS';
+var reports_url = '/ossim/report/wizard_custom_reports.php?hmenu=Reporting+Server&smenu=Reporting+Server';
+var newreport_url = '/ossim/report/wizard.php?hmenu=Reporting+Server&smenu=Reporting+Server';
+var hosts_url = '/ossim/host/host.php?hmenu=Assets&smenu=Hosts';
+var hg_url = '/ossim/host/hostgroup.php?hmenu=Assets&smenu=Host+groups';
+var nets_url = '/ossim/net/net.php?hmenu=Assets&smenu=Nets';
+var ng_url = '/ossim/net/netgroup.php?hmenu=Assets&smenu=Network+groups';
+var ports_url = '/ossim/port/port.php?hmenu=Assets&smenu=Ports';
+var assets_url = '/ossim/inventorysearch/userfriendly.php?hmenu=Asset+Search&smenu=Asset+Search';
+var policy_url = '/ossim/policy/policy.php?hmenu=Policy&smenu=Policy';
+var actions_url = '/ossim/action/action.php?hmenu=Policy&smenu=Actions';
+var directives_url = '/ossim/directive_editor/main.php?hmenu=Directives&smenu=Directives';
+var pci_url = '/ossim/compliance/pci-dss.php?hmenu=Compliance&smenu=PCIDSS';
+var iso_url = '/ossim/compliance/iso27001.php?hmenu=Compliance&smenu=Compliance';
+var rules_url = '/ossim/conf/pluginref.php?hmenu=Cross+Correlation&smenu=Cross+Correlation';
+var reputation_url = '/ossim/reputation/index.php?hmenu=IP+Reputation&smenu=IP+Reputation';
+var traffic_url = '/ossim/nfsen/index.php?tab=2&hmenu=Network&smenu=Network';
+var capture_url = '/ossim/pcap/index.php?hmenu=Network&smenu=Traffic+capture';
+var ntop_url = '/ossim/ntop/index.php?opc=services&sensor=&hmenu=Network&smenu=Profiles';
+var nagios_url = '/ossim/nagios/index.php?hmenu=Availability&smenu=Availability';
+var config_url = '/ossim/conf/main.php?adv=1&hmenu=Main&smenu=Advanced';
+var users_url = '/ossim/acl/users.php?hmenu=Users&smenu=Users';
+var entities_url = '/ossim/acl/entities.php?hmenu=Users&smenu=Users';
+var templates_url = '/ossim/acl/templates.php?hmenu=Users&smenu=Users';
+var sensors_url = '/ossim/sensor/sensor.php?hmenu=SIEM+Components&smenu=SIEM+Components';
+var servers_url = '/ossim/server/server.php?hmenu=SIEM+Components&smenu=Servers';
+var dbs_url = '/ossim/server/dbs.php?hmenu=SIEM+Components&smenu=DBs';
+var datasrc_url = '/ossim/conf/plugin.php?hmenu=Plugins&smenu=Data+Sources';
+var dsrc_url = '/ossim/policy/plugingroups.php?hmenu=Plugins&smenu=Data+Sources';
+var taxonomy_url = '/ossim/conf/category.php?hmenu=Plugins&smenu=Data+Sources';
+var downloads_url = '/ossim/downloads/index.php?hmenu=Plugins&smenu=Downloads';
+var backup_url = '/ossim/backup/index.php?hmenu=Backup&smenu=Backup';
+var logout_url = '/ossim/session/login.php?action=logout';
+var profile_url = '/ossim/acl/users_edit.php?login=admin&frommenu=1&hmenu=Userprofile&smenu=Userprofile';
+//
+var vrules = new Object();
+vrules["alarms?|alarmas?"] = alarm_url;
+vrules["tickets?|incidents?|incidentes?"] = tickets_url;
+vrules["maps?|risk|riesgo|risk maps?|mapas?"] = maps_url;
+vrules["dashboard|board|panel"] = panel_url;
+vrules["events?|eventos|forense"] = siem_url;
+vrules["logs|logg|logger|raw logs?"] = logger_url;
+vrules["vulnerability|vulnerabilities|vulnerabilidad|vulns?"] = vulns_url;
+vrules["hids|ids|ossec|osec"] = hids_url;
+vrules["informes?|reportes|reports?"] = reports_url;
+vrules["new report|nuevo informe"] = newreport_url;
+vrules["hosts?|equipos?"] = hosts_url;
+vrules["host groups?|grupos de equipos|hostgroup|hostgroups"] = hg_url;
+vrules["networks?|redes|nets"] = nets_url;
+vrules["network groups?|grupo de redes"] = ng_url;
+vrules["ports?s|puerto|puertos"] = ports_url;
+vrules["asset search|search|buscar|assets"] = assets_url;
+vrules["policy|politics|politicas?|políticas?"] = policy_url;
+vrules["actions?|acción|acciones"] = actions_url;
+vrules["directives?|directivas?"] = directives_url;
+vrules["pci|compliance|iso"] = iso_url;
+vrules["rules|correlation|reglas|correlación"] = rules_url;
+vrules["reputation|reputación"] = reputation_url;
+vrules["traffic|nfsen|tráfico|flows?"] = traffic_url;
+vrules["captures?|capturas?"] = capture_url;
+vrules["ntop|top"] = ntop_url;
+vrules["nagios|availability|disponibilidad"] = nagios_url;
+vrules["config|configuration|configuración|configuraciones"] = config_url;
+vrules["users?|usuarios?|profiles|perfiles"] = users_url;
+vrules["entity|entities|entidades|empresas"] = entities_url;
+vrules["groups|departments|companies|departamentos"] = entities_url;
+vrules["template|templates|plantillas|permisos"] = templates_url;
+vrules["perms|permissions|rights"] = templates_url;
+vrules["sensor|sensors|sensores|sondas"] = sensors_url;
+vrules["servers|servidores"] = servers_url;
+vrules["database|databases"] = dbs_url;
+vrules["data source|data sources|plugins"] = datasrc_url;
+vrules["ds group|ds groups|plugin group|plugin groups|grupos de plugins"] = dsrc_url;
+vrules["taxonomy|taxonomies|taxonomía?"] = taxonomy_url;
+vrules["download|downloads|descargas?"] = downloads_url;
+vrules["backups?|respaldo?"] = backup_url;
+vrules["logout|log out|salir|salida"] = logout_url;
+vrules["profile|perfil"] = profile_url;
+//
+function dovoice(val) {
+	var url = '';
+	for ( rule in vrules ) {
+		var re = new RegExp(rule,"ig");
+		if (val.match(re)) url=vrules[rule];
+	}
+	if (url != '') parent.frames["main"].document.location.href=url;
+	else           alert(val+': Command not recognized');
+}
+						

@@ -1,0 +1,256 @@
+<?php
+/*****************************************************************************
+*
+*    License:
+*
+*   Copyright (c) 2003-2006 ossim.net
+*   Copyright (c) 2007-2009 AlienVault
+*   All rights reserved.
+*
+*   This package is free software; you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation; version 2 dated June, 1991.
+*   You may not use, modify or distribute this program under any other version
+*   of the GNU General Public License.
+*
+*   This package is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+*
+*   You should have received a copy of the GNU General Public License
+*   along with this package; if not, write to the Free Software
+*   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+*   MA  02110-1301  USA
+*
+*
+* On Debian GNU/Linux systems, the complete text of the GNU General
+* Public License can be found in `/usr/share/common-licenses/GPL-2'.
+*
+* Otherwise you can read it here: http://www.gnu.org/licenses/gpl-2.0.txt
+****************************************************************************/
+/**
+* Class and Function List:
+* Function list:
+* Classes list:
+*/
+require_once ('classes/Session.inc');
+require_once ('classes/Util.inc');
+require_once ('classes/Security.inc');
+require_once ('ossim_db.inc');
+require_once ('classes/Host_group.inc');
+require_once ('classes/Host_group_reference.inc');
+require_once ('classes/Host_group_scan.inc');
+require_once ('classes/NagiosConfigs.inc');
+ 
+Session::logcheck("MenuPolicy", "PolicyHosts");
+
+$error = false;
+
+$descr        = POST('descr');
+$hgname       = POST('hgname');
+$threshold_a  = POST('threshold_a');
+$threshold_c  = POST('threshold_c');
+$rrd_profile  = POST('rrd_profile');
+$hosts        = ( isset($_POST['ips'] ) && !empty ( $_POST['ips']) ) ? Util::clean_array(POST('ips')) : array();
+$sensors      = ( isset($_POST['sboxs'] ) && !empty ( $_POST['sboxs']) ) ? Util::clean_array(POST('sboxs')) : array();
+$nagios       = POST('nagios');
+$latitude     = POST('latitude');
+$longitude    = POST('longitude');
+$zoom         = intval(POST('zoom'));
+
+$num_sensors  = count($sensors);
+$num_hosts    = count($hosts);
+
+$validate = array (
+	"hgname"      => array("validation"=>"OSS_ALPHA, OSS_PUNC",                           "e_message" => 'illegal:' . _("Host Group Name")),
+	"descr"       => array("validation"=>"OSS_NULLABLE, OSS_AT, OSS_TEXT",                "e_message" => 'illegal:' . _("Description")),
+	"ips"         => array("validation"=>"OSS_IP_ADDR",                                   "e_message" => 'illegal:' . _("Hosts")),
+	"sboxs"       => array("validation"=>"OSS_ALPHA, OSS_SCORE, OSS_PUNC, OSS_AT",        "e_message" => 'illegal:' . _("Sensors")),
+	"rrd_profile" => array("validation"=>"OSS_ALPHA, OSS_NULLABLE, OSS_PUNC",             "e_message" => 'illegal:' . _("RRD Profile")),
+	"threshold_a" => array("validation"=>"OSS_DIGIT",                                     "e_message" => 'illegal:' . _("Threshold A")),
+	"threshold_c" => array("validation"=>"OSS_DIGIT",                                     "e_message" => 'illegal:' . _("Threshold C")),
+	"nagios"      => array("validation"=>"OSS_NULLABLE, OSS_DIGIT",                       "e_message" => 'illegal:' . _("Nagios")),
+	"latitude"     => array("validation"=>"OSS_NULLABLE, OSS_DIGIT, OSS_SCORE, OSS_PUNC", "e_message" => 'illegal:' . _("Latitude")),
+	"longitude"    => array("validation"=>"OSS_NULLABLE, OSS_DIGIT, OSS_SCORE, OSS_PUNC", "e_message" => 'illegal:' . _("Longitude"))
+);
+	
+if ( GET('ajax_validation') == true )
+{
+	$validation_errors = validate_form_fields('GET', $validate);
+	if ( $validation_errors == 1 )
+		echo 1;
+	else if ( empty($validation_errors) )
+		echo 0;
+	else
+		echo $validation_errors[0];
+		
+	exit();
+}
+else
+{
+	$validation_errors = validate_form_fields('POST', $validate);
+	
+	if ( $validation_errors == 1 || (is_array($validation_errors) && !empty($validation_errors)) || $num_sensors == 0 || $num_hosts == 0 )
+	{
+		$error = true;
+		
+		$message_error = array();
+		
+		if( $num_hosts == 0)
+			$message_error [] = _("You Need to select at least one Host");
+		
+		if( $num_sensors == 0)
+			$message_error [] = _("You Need to select at least one Sensor");
+						
+			
+		if ( is_array($validation_errors) && !empty($validation_errors) )
+			$message_error = array_merge($message_error, $validation_errors);
+		else
+		{
+			if ($validation_errors == 1)
+				$message_error [] = _("Invalid send method");
+		}
+	}
+	
+	if ( POST('ajax_validation_all') == true )
+	{
+		if ( is_array($message_error) && !empty($message_error) )
+			echo utf8_encode(implode( "<br/>", $message_error));
+		else
+			echo 0;
+		
+		exit();
+	}
+	
+	
+}
+
+if ( $error == true )
+{
+	$_SESSION['_assets_hg']['hgname']      = $hgname;
+	$_SESSION['_assets_hg']['hosts']       = $hosts;
+	$_SESSION['_assets_hg']['descr']       = $descr;
+	$_SESSION['_assets_hg']['sensors']     = $sensors;
+	$_SESSION['_assets_hg']['threshold_a'] = $threshold_a;
+	$_SESSION['_assets_hg']['threshold_c'] = $threshold_c;
+	$_SESSION['_assets_hg']['rrd_profile'] = $rrd_profile;
+	$_SESSION['_assets_hg']['nagios']      = $nagios;
+	$_SESSION['_assets_hg']['latitude']    = $latitude;
+	$_SESSION['_assets_hg']['longitude']   = $longitude;
+	$_SESSION['_assets_hg']['zoom']        = $zoom;	
+}
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+	<title> <?php echo gettext("OSSIM Framework"); ?> </title>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+	<meta http-equiv="Pragma" content="no-cache"/>
+	<link rel="stylesheet" type="text/css" href="../style/style.css"/>
+</head>
+
+<body>
+
+<?php
+if (POST('withoutmenu') != "1") 
+{
+	include ("../hmenu.php"); 
+	$get_param = "name=$hgname";
+}
+else
+	$get_param = "name=$hgname&withoutmenu=1";
+
+if ( POST('insert') && !empty($hgname) )
+{
+    if ( $error == true)
+	{
+		$txt_error = "<div>"._("We Found the following errors").":</div><div style='padding:10px;'>".implode( "<br/>", $message_error)."</div>";				
+		Util::print_error($txt_error);	
+				
+		Util::make_form("POST", "newhostgroupform.php?".$get_param);
+		die();
+	}
+		
+    $db = new ossim_db();
+    $conn = $db->connect();
+   
+    /*
+	NESSUS - DEPRECATED
+        Host_group_scan::delete($conn, $hgname, 3001, 0);
+        Host_group_scan::insert($conn, $hgname, 3001, 0);
+	*/
+	
+	
+	Host_group_scan::delete($conn, $hgname, 3001, 0);
+    
+	if (Host_group_scan::in_host_group_scan($conn, $$hgname, 2007)) 
+	{
+        $hosts_list = Host_group_reference::get_list($conn, $hgname, "2007");
+        
+		foreach($hosts_list as $host) 
+			$hostip[] = $host->get_host_ip();
+        
+		foreach($hostip as $host)
+		{
+            $flag = false;
+            foreach($hosts as $h) if (strcmp($h, $host) == 0) {
+                $flag = true;
+                break;
+            }
+            if ($flag == false) {
+                if (Host_group_scan::can_delete_host_from_nagios($conn, $host, $hgname)) {
+                   
+                    $q = new NagiosAdm();
+                    $q->delHost(new NagiosHost($host, $host, ""));
+                    $q->close();
+                }
+            }
+        }
+    }
+	
+    if ($nagios)
+	{
+        if (Host_group_scan::in_host_group_scan($conn, $hgname, 2007)) 
+			Host_group_scan::delete($conn, $hgname, 2007);
+        
+		Host_group_scan::insert($conn, $hgname, 2007);
+       
+        $q = new NagiosAdm();
+        $q->addNagiosHostGroup(new NagiosHostGroup($hgname, $hosts, $sensors),$conn);
+        $q->close();
+    } 
+	else
+	{
+        if (Host_group_scan::in_host_group_scan($conn, $hgname, 2007)) 
+			Host_group_scan::delete($conn, $hgname, 2007);
+    }
+    
+	Host_group::update($conn, $hgname, $threshold_c, $threshold_a, $rrd_profile, $sensors, $hosts, $descr, $latitude, "$longitude;$zoom");
+    $db->close($conn);
+	
+	Util::clean_json_cache_files("(policy|vulnmeter|hostgroup)");
+}
+
+if ( isset($_SESSION['_assets_hg']) )
+	unset($_SESSION['_assets_hg']);
+
+if ( $_SESSION["menu_sopc"]=="Host groups" && POST('withoutmenu') != "1" ) 
+{
+	?>
+	<p><?php echo gettext("Host group successfully updated"); ?></p>
+	<script type='text/javascript'>document.location.href="hostgroup.php"</script>
+	<?php
+}
+else 
+{
+	?><script type='text/javascript'>document.location.href="newhostgroupform.php?<?php echo $get_param; ?>&update=1"</script><?php
+}
+?>
+	</body>
+</html>
+

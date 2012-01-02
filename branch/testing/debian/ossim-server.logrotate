@@ -1,0 +1,9 @@
+/var/log/ossim/server.log {
+    daily
+    rotate 5
+    compress
+    missingok
+    notifempty
+    create 640 root root
+}
+

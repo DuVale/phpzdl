@@ -1,0 +1,206 @@
+
+--
+-- Data: Config
+--
+INSERT INTO config (conf, value) VALUES ('snort_path', '/etc/snort/');
+INSERT INTO config (conf, value) VALUES ('snort_rules_path', '/etc/snort/rules/');
+INSERT INTO config (conf, value) VALUES ('snort_type', 'mysql');
+INSERT INTO config (conf, value) VALUES ('snort_base', 'snort');
+INSERT INTO config (conf, value) VALUES ('snort_user', 'root');
+INSERT INTO config (conf, value) VALUES ('snort_pass', 'root');
+INSERT INTO config (conf, value) VALUES ('snort_host', 'localhost');
+INSERT INTO config (conf, value) VALUES ('snort_port', '3306');
+INSERT INTO config (conf, value) VALUES ('locale_dir', '/usr/share/locale');
+INSERT INTO config (conf, value) VALUES ('language', 'en');
+INSERT INTO config (conf, value) VALUES ('server_address', 'localhost');
+INSERT INTO config (conf, value) VALUES ('server_port', '40001');
+INSERT INTO config (conf, value) VALUES ('server_correlate', 'yes');
+INSERT INTO config (conf, value) VALUES ('server_cross_correlate', 'yes');
+INSERT INTO config (conf, value) VALUES ('server_logger_if_priority', '1');
+INSERT INTO config (conf, value) VALUES ('server_qualify', 'yes');
+INSERT INTO config (conf, value) VALUES ('server_store', 'yes');
+INSERT INTO config (conf, value) VALUES ('server_sim', 'yes');
+INSERT INTO config (conf, value) VALUES ('server_sem', 'yes');
+INSERT INTO config (conf, value) VALUES ('server_sign', 'no');
+INSERT INTO config (conf, value) VALUES ('server_forward_alarm', 'yes');
+INSERT INTO config (conf, value) VALUES ('server_forward_event', 'yes');
+INSERT INTO config (conf, value) VALUES ('copy_siem_events', 'no');
+INSERT INTO config (conf, value) VALUES ('server_alarms_to_syslog', 'yes');
+INSERT INTO config (conf, value) VALUES ('phpgacl_path', '/usr/share/php/phpgacl/');
+INSERT INTO config (conf, value) VALUES ('phpgacl_type', 'mysql');
+INSERT INTO config (conf, value) VALUES ('phpgacl_host', 'localhost');
+INSERT INTO config (conf, value) VALUES ('phpgacl_base', 'ossim_acl');
+INSERT INTO config (conf, value) VALUES ('phpgacl_user', 'root');
+INSERT INTO config (conf, value) VALUES ('phpgacl_pass', 'passwd');
+INSERT INTO config (conf, value) VALUES ('graph_link', '../report/graphs/draw_rrd.php');
+INSERT INTO config (conf, value) VALUES ('rrdtool_lib_path', '/usr/lib64/perl5/vendor_perl/5.12.4/');
+INSERT INTO config (conf, value) VALUES ('ntop_link', 'http://localhost:3000');
+INSERT INTO config (conf, value) VALUES ('use_ntop_rewrite', '1');
+INSERT INTO config (conf, value) VALUES ('munin_link', '/munin/');
+INSERT INTO config (conf, value) VALUES ('use_munin', '1');
+INSERT INTO config (conf, value) VALUES ('ossim_link', '/ossim/');
+INSERT INTO config (conf, value) VALUES ('backup_type', 'mysql');
+INSERT INTO config (conf, value) VALUES ('backup_base', 'snort');
+INSERT INTO config (conf, value) VALUES ('backup_user', 'root');
+INSERT INTO config (conf, value) VALUES ('backup_pass', 'passwd');
+INSERT INTO config (conf, value) VALUES ('backup_host', 'localhost');
+INSERT INTO config (conf, value) VALUES ('backup_port', '3306');
+INSERT INTO config (conf, value) VALUES ('backup_store', '1');
+INSERT INTO config (conf, value) VALUES ('backup_dir', '/var/lib/ossim/backup');
+INSERT INTO config (conf, value) VALUES ('backup_day', '5');
+INSERT INTO config (conf, value) VALUES ('backup_events', '4000000');
+INSERT INTO config (conf, value) VALUES ('backup_netflow', '45');
+INSERT INTO config (conf, value) VALUES ('nessus_user', 'ossim');
+INSERT INTO config (conf, value) VALUES ('nessus_pass', 'ossim');
+INSERT INTO config (conf, value) VALUES ('nessus_host', 'localhost');
+INSERT INTO config (conf, value) VALUES ('nessus_port', '9390');
+INSERT INTO config (conf, value) VALUES ('nessus_path', '/usr/bin/openvas-client');
+INSERT INTO config (conf, value) VALUES ('nessus_updater_path', '/usr/sbin/openvas-nvt-sync');
+INSERT INTO config (conf, value) VALUES ('scanner_type', 'openvas3');
+INSERT INTO config (conf, value) VALUES ('nessus_rpt_path', '/usr/share/ossim/www/vulnmeter/');
+INSERT INTO config (conf, value) VALUES ('nessus_distributed', '0');
+INSERT INTO config (conf, value) VALUES ('nessusrc_path', '/usr/share/ossim/www/vulnmeter/tmp/.nessusrc');
+INSERT INTO config (conf, value) VALUES ('nessus_pre_scan_locally', '1');
+INSERT INTO config (conf, value) VALUES ('acid_user', 'admin');
+INSERT INTO config (conf, value) VALUES ('acid_pass', 'admin');
+INSERT INTO config (conf, value) VALUES ('ossim_web_user', 'admin');
+INSERT INTO config (conf, value) VALUES ('ossim_web_pass', 'admin');
+INSERT INTO config (conf, value) VALUES ('jpgraph_path', '/usr/share/php/jpgraph/');
+INSERT INTO config (conf, value) VALUES ('fpdf_path', '/usr/share/fpdf/');
+INSERT INTO config (conf, value) VALUES ('xajax_php_path', 'xajax/');
+INSERT INTO config (conf, value) VALUES ('xajax_js_path', '../js/');
+INSERT INTO config (conf, value) VALUES ('adodb_path', '/usr/share/php5/adodb/');
+INSERT INTO config (conf, value) VALUES ('rrdtool_path', '/usr/bin/');
+INSERT INTO config (conf, value) VALUES ('mrtg_path', '/usr/bin/');
+INSERT INTO config (conf, value) VALUES ('mrtg_rrd_files_path', '/usr/lib64/mrtg2/');
+INSERT INTO config (conf, value) VALUES ('rrdpath_host', '/var/lib/ossim/rrd/host_qualification/');
+INSERT INTO config (conf, value) VALUES ('rrdpath_net', '/var/lib/ossim/rrd/net_qualification/');
+INSERT INTO config (conf, value) VALUES ('rrdpath_global', '/var/lib/ossim/rrd/global_qualification/');
+INSERT INTO config (conf, value) VALUES ('rrdpath_level', '/var/lib/ossim/rrd/level_qualification/');
+INSERT INTO config (conf, value) VALUES ('rrdpath_incidents', '/var/lib/ossim/rrd/incidents/');
+INSERT INTO config (conf, value) VALUES ('rrdpath_bps', '/var/lib/ossim/rrd/business_processes/');
+INSERT INTO config (conf, value) VALUES ('rrdpath_stats', '/var/lib/ossim/rrd/event_stats/');
+INSERT INTO config (conf, value) VALUES ('rrdpath_ntop', '/var/lib/ntop/rrd/');
+INSERT INTO config (conf, value) VALUES ('font_path', '/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf');
+INSERT INTO config (conf, value) VALUES ('nagios_link', '/nagios/');
+INSERT INTO config (conf, value) VALUES ('acid_link', '/ossim/forensics/');
+INSERT INTO config (conf, value) VALUES ('acid_path', '/usr/share/ossim/www/forensics/');
+INSERT INTO config (conf, value) VALUES ('nmap_path', '/usr/bin/nmap');
+INSERT INTO config (conf, value) VALUES ('p0f_path', '/usr/sbin/p0f');
+INSERT INTO config (conf, value) VALUES ('arpwatch_path', '/usr/sbin/arpwatch');
+INSERT INTO config (conf, value) VALUES ('mail_path', '/usr/bin/mail');
+INSERT INTO config (conf, value) VALUES ('touch_path', '/bin/tail');
+INSERT INTO config (conf, value) VALUES ('wget_path', '/usr/bin/wget');
+INSERT INTO config (conf, value) VALUES ('report_graph_type', 'images');
+INSERT INTO config (conf, value) VALUES ('use_resolv', '0');
+INSERT INTO config (conf, value) VALUES ('recovery', '1');
+INSERT INTO config (conf, value) VALUES ('threshold', '30');
+INSERT INTO config (conf, value) VALUES ('def_asset', '2');
+INSERT INTO config (conf, value) VALUES ('have_scanmap3d', '0');
+INSERT INTO config (conf, value) VALUES ('use_svg_graphics', '0');
+INSERT INTO config (conf, value) VALUES ('event_viewer', 'base');
+INSERT INTO config (conf, value) VALUES ('user_action_log', '1');
+INSERT INTO config (conf, value) VALUES ('log_syslog', '1');
+INSERT INTO config (conf, value) VALUES ('frameworkd_address', 'localhost');
+INSERT INTO config (conf, value) VALUES ('frameworkd_port', '40003');
+INSERT INTO config (conf, value) VALUES ('frameworkd_dir', '/usr/share/ossim-framework/ossimframework');
+INSERT INTO config (conf, value) VALUES ('frameworkd_controlpanelrrd', '1');
+INSERT INTO config (conf, value) VALUES ('frameworkd_acidcache', '0');
+INSERT INTO config (conf, value) VALUES ('frameworkd_listener', '1');
+INSERT INTO config (conf, value) VALUES ('frameworkd_alarmincidentgeneration', '1');
+INSERT INTO config (conf, value) VALUES ('frameworkd_eventstats', '0');
+INSERT INTO config (conf, value) VALUES ('frameworkd_donagios','1');
+INSERT INTO config (conf, value) VALUES ('frameworkd_optimizedb', '1');
+INSERT INTO config (conf, value) VALUES ('frameworkd_scheduler', '1');
+INSERT INTO config (conf, value) VALUES ('frameworkd_soc', '0');
+INSERT INTO config (conf, value) VALUES ('frameworkd_businessprocesses', '1');
+INSERT INTO config (conf, value) VALUES ('frameworkd_backup', '1');
+INSERT INTO config (conf, value) VALUES ('frameworkd_alarmgroup', '1');
+INSERT INTO config (conf, value) VALUES ('email_subject_template', '');
+INSERT INTO config (conf, value) VALUES ('email_body_template', '');
+INSERT INTO config (conf, value) VALUES ('panel_plugins_dir', '');
+INSERT INTO config (conf, value) VALUES ('panel_configs_dir', '/etc/ossim/framework/panel/configs');
+INSERT INTO config (conf, value) VALUES ('max_event_tmp', '10000');
+INSERT INTO config (conf, value) VALUES ('osvdb_type', 'mysql');
+INSERT INTO config (conf, value) VALUES ('osvdb_base', 'osvdb_test');
+INSERT INTO config (conf, value) VALUES ('osvdb_user', 'root');
+INSERT INTO config (conf, value) VALUES ('osvdb_pass', 'passwd');
+INSERT INTO config (conf, value) VALUES ('osvdb_host', 'localhost');
+INSERT INTO config (conf, value) VALUES ('vulnerability_incident_threshold', '2');
+INSERT INTO config (conf, value) VALUES ('login_enable_ldap', "no");
+INSERT INTO config (conf, value) VALUES ('login_enforce_existing_user', "yes");
+INSERT INTO config (conf, value) VALUES ('login_ldap_server', "127.0.0.1");
+INSERT INTO config (conf, value) VALUES ('login_ldap_o', "o=company");
+INSERT INTO config (conf, value) VALUES ('login_ldap_cn', "cn");
+INSERT INTO config (conf, value) VALUES ('login_ldap_ou', "ou=people");
+INSERT INTO config (conf, value) VALUES ('pass_expire', '0');
+INSERT INTO config (conf, value) VALUES ('ocs_link','/ossim/ocsreports/index.php?lang=english');
+INSERT INTO config (conf, value) VALUES ('ovcp_link','');
+INSERT INTO config (conf, value) VALUES ('glpi_link','');
+INSERT INTO config (conf, value) VALUES ('md5_salt','salty_dog');
+INSERT INTO config (conf, value) VALUES ('update_checks_enable','');
+INSERT INTO config (conf, value) VALUES ('update_checks_use_proxy','no');
+INSERT INTO config (conf, value) VALUES ('proxy_url','');
+INSERT INTO config (conf, value) VALUES ('proxy_user','');
+INSERT INTO config (conf, value) VALUES ('proxy_password','');
+INSERT INTO config (conf, value) VALUES ('update_checks_source','http://data.alienvault.com/updates/update_log.txt');
+INSERT INTO config (conf, value) VALUES ('repository_upload_dir', "/usr/share/ossim/uploads");
+INSERT INTO config (conf, value) VALUES ('bi_type','jasperserver');
+INSERT INTO config (conf, value) VALUES ('bi_host','localhost');
+INSERT INTO config (conf, value) VALUES ('bi_port','8080');
+INSERT INTO config (conf, value) VALUES ('bi_link','/jasperserver/flow.html?_flowId=searchFlow&curlnk=2&j_username=USER&j_password=PASSWORD');
+INSERT INTO config (conf, value) VALUES ('bi_user','jasperadmin');
+INSERT INTO config (conf, value) VALUES ('bi_pass','');
+INSERT INTO config (conf, value) VALUES ('first_login', 'yes');
+INSERT INTO config (conf, value) VALUES ('alarms_generate_incidents', 'no');
+INSERT INTO config (conf, value) VALUES ('from', 'no-reply@localhost.localdomain');
+INSERT INTO config (conf, value) VALUES ('smtp_server_address', '127.0.0.1');
+INSERT INTO config (conf, value) VALUES ('smtp_port', '25');
+INSERT INTO config (conf, value) VALUES ('smtp_user', '');
+INSERT INTO config (conf, value) VALUES ('smtp_pass', '');
+INSERT INTO config (conf, value) VALUES ('use_ssl','no');
+
+INSERT INTO config (conf, value) VALUES ('dc_acc','');
+INSERT INTO config (conf, value) VALUES ('dc_ip','');
+INSERT INTO config (conf, value) VALUES ('dc_pass','');
+INSERT INTO config (conf, value) VALUES ('nagios_cfgs','/etc/nagios3/conf.d/ossim-configs/');
+INSERT INTO config (conf, value) VALUES ('nagios_reload_cmd','/etc/init.d/nagios3 reload || { /etc/init.d/nagios3 stop;/etc/init.d/nagios3 start; }');
+INSERT INTO config (conf, value) VALUES ('snmp_comm','');
+INSERT INTO config (conf, value) VALUES ('server_resend_alarm','1');
+INSERT INTO config (conf, value) VALUES ('server_resend_event','1');
+
+INSERT INTO config (conf , value) VALUES ('server_remote_logger', 'no');
+INSERT INTO config (conf , value) VALUES ('server_remote_logger_user', '');
+INSERT INTO config (conf , value) VALUES ('server_remote_logger_pass', '');
+INSERT INTO config (conf , value) VALUES ('server_remote_logger_ossim_url', '');
+
+INSERT INTO config (conf,  value) VALUES ('network_auto_discovery', '0');
+INSERT INTO config (conf , value) VALUES ('nedi_autodiscovery', '0');
+
+INSERT INTO config (conf , value) VALUES ('tickets_max_days', '15');
+
+INSERT INTO config (conf , value) VALUES ('session_timeout', '15');
+INSERT INTO config (conf , value) VALUES ('unlock_user_interval', '5');
+INSERT INTO config (conf , value) VALUES ('failed_retries', '5');
+INSERT INTO config (conf , value) VALUES ('pass_complex', 'no');
+INSERT INTO config (conf , value) VALUES ('pass_length_min', '7');
+INSERT INTO config (conf , value) VALUES ('pass_length_max', '32');
+INSERT INTO config (conf , value) VALUES ('pass_expire_min', '0');
+INSERT INTO config (conf , value) VALUES ('pass_history', '0');
+
+INSERT INTO config (conf, value) VALUES ('solera_enable', '0');
+
+INSERT INTO `config` (`conf`, `value`) VALUES
+('customize_send_logs', NULL),
+('customize_title_background_color', '#8CC221'),
+('customize_title_foreground_color', '#000000'),
+('customize_subtitle_background_color', '#7A7A7A'),
+('customize_subtitle_foreground_color', '#FFFFFF'),
+('customize_wizard', '0');
+INSERT INTO config (conf, value) VALUES ('alarms_lifetime', '0');
+INSERT INTO config (conf, value) VALUES ('enable_idm', '0');
+INSERT INTO config (conf, value) VALUES ('server_reputation', 'no');
+
+
+INSERT INTO config (conf, value) VALUES ('last_update', '2011-10-28');
+INSERT INTO config (conf, value) VALUES ('ossim_schema_version', '3.0.6');
